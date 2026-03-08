@@ -16,7 +16,7 @@ export function PortfolioClient({ investments: init, investorId }: { investments
   const [form, setForm] = useState({ company_name:"", sector:"", stage:"", amount:"", equity_pct:"", notes:"" });
 
   const totalInvested = items.reduce((sum, i) => sum + (i.amount ?? 0), 0);
-  const sectors = [...new Set(items.map(i => i.sector).filter(Boolean))];
+  const sectors = Array.from(new Set(items.map(i => i.sector).filter(Boolean)));
 
   const saveInvestment = async () => {
     if (!form.company_name) { toast.error("Company name required"); return; }
