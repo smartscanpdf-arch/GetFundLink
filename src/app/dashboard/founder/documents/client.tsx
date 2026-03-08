@@ -28,7 +28,6 @@ export function DocumentsClient({ documents: init, deckUrl, deckName }: { docume
   const [folder,   setFolder]       = useState("general");
   const [access,   setAccess]       = useState("private");
 
-  // Deck upload
   const [deckFile, setDeckFile] = useState<File|null>(null);
   const [deckUploading, setDeckUploading] = useState(false);
 
@@ -81,7 +80,6 @@ export function DocumentsClient({ documents: init, deckUrl, deckName }: { docume
           <Btn variant="primary" size="sm" onClick={() => setUploadOpen(true)}>+ Upload Doc</Btn>
         </div>
 
-        {/* Pitch deck section */}
         <Card className="p-5 mb-5 border-teal-200 bg-teal-50/30">
           <div className="flex items-start gap-3">
             <span className="text-2xl">📋</span>
@@ -102,7 +100,6 @@ export function DocumentsClient({ documents: init, deckUrl, deckName }: { docume
           </div>
         </Card>
 
-        {/* Other documents */}
         {docs.length === 0 ? (
           <EmptyState icon="📂" title="No documents yet" body="Upload financial models, legal docs, or other data room materials." cta="Upload Document" onCta={() => setUploadOpen(true)}/>
         ) : (
