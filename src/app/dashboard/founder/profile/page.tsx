@@ -74,7 +74,7 @@ export default function FounderProfilePage() {
   const save = async () => {
     if (!startupName) { toast.error("Startup name is required"); return; }
     setSaving(true);
-    const { error: fpErr } = await supabase.from("founder_profiles").upsert({
+    const { error: fpErr } = await (supabase.from("founder_profiles") as any).upsert({
       user_id:      user!.id,
       startup_name: startupName,
       tagline,
@@ -86,11 +86,11 @@ export default function FounderProfilePage() {
       team_size:    teamSize    ? parseInt(teamSize)                         : null,
       founded_year: foundedYear ? parseInt(foundedYear)                     : null,
       website,
-    } as Record<string, any>, { onConflict: "user_id" });
+    }, { onConflict: "user_id" });
 
-    const { error: pErr } = await supabase.from("profiles").update({
+    const { error: pErr } = await (supabase.from("profiles") as any).update({
       full_name: fullName, bio, city, linkedin_url: linkedin,
-    } as Record<string, any>).eq("id", user!.id);
+    }).eq("id", user!.id);
 
     setSaving(false);
     if (fpErr || pErr) { toast.error("Save failed. Please try again."); return; }
