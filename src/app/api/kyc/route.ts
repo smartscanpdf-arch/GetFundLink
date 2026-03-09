@@ -43,19 +43,18 @@ export async function PATCH(request: Request) {
 
   if (doc_id) {
     // Update document
-    await admin.from("kyc_documents").update({
+    await (admin.from("kyc_documents") as any).update({
       status, 
       reviewer_id: user.id, 
       review_note: reviewNote, 
       reviewed_at: new Date().toISOString(),
-    } as Record<string, any>).eq("id", doc_id);
+    }).eq("id", doc_id);
 
     // Get user info
-    const { data: doc } = await admin
-      .from("kyc_documents")
+    const { data: doc } = await (admin.from("kyc_documents") as any)
       .select("user_id, user:user_id(email, full_name)")
       .eq("id", doc_id)
-      .single<{ user_id: string; user: { email: string; full_name: string } }>();
+      .single();
 
     userId = doc?.user_id || null;
   } else if (user_id) {
@@ -67,22 +66,21 @@ export async function PATCH(request: Request) {
 
   if (userId) {
     // Update profile kyc_status
-    await admin.from("profiles").update({
+    await (admin.from("profiles") as any).update({
       kyc_status:      status,
       kyc_reviewed_at: new Date().toISOString(),
       is_verified:     status === "approved",
-    } as Record<string, any>).eq("id", userId);
+    }).eq("id", userId);
 
     // Get user info for notification
-    const { data: userProfile } = await admin
-      .from("profiles")
+    const { data: userProfile } = await (admin.from("profiles") as any)
       .select("email, full_name")
       .eq("id", userId)
-      .single<{ email: string; full_name: string }>();
+      .single();
 
     // Notify user
     if (userProfile?.email) {
-      await admin.from("notifications").insert({
+      await (admin.from("notifications") as any).insert({
         user_id:    userId,
         type:       `kyc_${status}`,
         title:      `KYC verification ${status}`,

@@ -34,13 +34,12 @@ export async function POST(request: Request) {
 
   // Notify admins
   const admin = createAdminClient();
-  const { data: admins } = await admin
-    .from("profiles")
+  const { data: admins } = await (admin.from("profiles") as any)
     .select("id")
     .eq("role", "admin");
 
   if (admins?.length) {
-    await admin.from("notifications").insert(
+    await (admin.from("notifications") as any).insert(
       admins.map(a => ({
         user_id:    a.id,
         type:       "new_support_ticket",
