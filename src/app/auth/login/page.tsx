@@ -24,7 +24,10 @@ export default function LoginPage() {
 
     // Get actual role from profile
     const { data: profile } = await supabase
-      .from("profiles").select("role").eq("id", data.user.id).single();
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single<{ role: string }>();
 
     toast.success("Welcome back!");
     router.push(`/dashboard/${profile?.role ?? role}`);

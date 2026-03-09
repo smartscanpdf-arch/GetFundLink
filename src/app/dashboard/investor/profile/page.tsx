@@ -27,8 +27,8 @@ export default function InvestorProfilePage() {
   useEffect(() => {
     if (!user?.id) return;
     Promise.all([
-      supabase.from("investor_profiles").select("*").eq("user_id", user.id).single(),
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      (supabase.from("investor_profiles") as any).select("*").eq("user_id", user.id).single(),
+      (supabase.from("profiles") as any).select("*").eq("id", user.id).single(),
     ]).then(([{ data: ip }, { data: p }]) => {
       if (ip) { setFirmName(ip.firm_name??""); setTitle(ip.title??""); setThesis(ip.investment_thesis??""); setTicketMin(ip.ticket_min?String(ip.ticket_min/100):""); setTicketMax(ip.ticket_max?String(ip.ticket_max/100):""); }
       if (p)  { setFullName(p.full_name??""); setBio(p.bio??""); setCity(p.city??""); setLinkedin(p.linkedin_url??""); }
@@ -38,12 +38,12 @@ export default function InvestorProfilePage() {
   const save = async () => {
     setSaving(true);
     await Promise.all([
-      supabase.from("investor_profiles").upsert({
+      (supabase.from("investor_profiles") as any).upsert({
         user_id: user!.id, firm_name: firmName, title, investment_thesis: thesis,
         ticket_min: ticketMin ? Math.round(parseFloat(ticketMin)*100) : null,
         ticket_max: ticketMax ? Math.round(parseFloat(ticketMax)*100) : null,
       }, { onConflict:"user_id" }),
-      supabase.from("profiles").update({ full_name:fullName, bio, city, linkedin_url:linkedin }).eq("id", user!.id),
+      (supabase.from("profiles") as any).update({ full_name:fullName, bio, city, linkedin_url:linkedin }).eq("id", user!.id),
     ]);
     setSaving(false);
     toast.success("Profile saved!");

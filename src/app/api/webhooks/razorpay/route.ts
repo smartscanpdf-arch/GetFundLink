@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       if (!userId || !plan) break;
 
       // Update subscription
-      await admin.from("subscriptions").upsert({
+      await (admin.from("subscriptions") as any).upsert({
         user_id:               userId,
         plan,
         status:                "active",
@@ -45,10 +45,10 @@ export async function POST(request: Request) {
       }, { onConflict: "user_id" });
 
       // Update profile plan
-      await admin.from("profiles").update({ plan }).eq("id", userId);
+      await (admin.from("profiles") as any).update({ plan }).eq("id", userId);
 
       // Record invoice
-      await admin.from("invoices").insert({
+      await (admin.from("invoices") as any).insert({
         user_id:            userId,
         amount:             payment.amount,
         currency:           payment.currency,
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       });
 
       // Notify user
-      await admin.from("notifications").insert({
+      await (admin.from("notifications") as any).insert({
         user_id:    userId,
         type:       "payment_success",
         title:      `${plan} plan activated`,
@@ -73,14 +73,14 @@ export async function POST(request: Request) {
       const userId = sub?.notes?.user_id;
       if (!userId) break;
 
-      await admin.from("subscriptions").update({
+      await (admin.from("subscriptions") as any).update({
         status:       "cancelled",
         cancelled_at: new Date().toISOString(),
       }).eq("user_id", userId);
 
-      await admin.from("profiles").update({ plan: "free" }).eq("id", userId);
+      await (admin.from("profiles") as any).update({ plan: "free" }).eq("id", userId);
 
-      await admin.from("notifications").insert({
+      await (admin.from("notifications") as any).insert({
         user_id:    userId,
         type:       "subscription_cancelled",
         title:      "Subscription cancelled",
@@ -95,9 +95,9 @@ export async function POST(request: Request) {
       const userId  = payment?.notes?.user_id;
       if (!userId) break;
 
-      await admin.from("subscriptions").update({ status: "past_due" }).eq("user_id", userId);
+      await (admin.from("subscriptions") as any).update({ status: "past_due" }).eq("user_id", userId);
 
-      await admin.from("notifications").insert({
+      await (admin.from("notifications") as any).insert({
         user_id:    userId,
         type:       "payment_failed",
         title:      "Payment failed",

@@ -40,10 +40,10 @@ export function BrowseClient({ startups, savedIds: initialSaved, introMap: initi
     const isSaved = saved.has(founderId);
     setSaved(p => { const n = new Set(p); isSaved ? n.delete(founderId) : n.add(founderId); return n; });
     if (isSaved) {
-      await supabase.from("saved_startups").delete().eq("investor_id", investorId).eq("founder_id", founderId);
+      await (supabase.from("saved_startups") as any).delete().eq("investor_id", investorId).eq("founder_id", founderId);
       toast.success("Removed from saved");
     } else {
-      await supabase.from("saved_startups").insert({ investor_id: investorId, founder_id: founderId });
+      await (supabase.from("saved_startups") as any).insert({ investor_id: investorId, founder_id: founderId });
       toast.success("Saved! ✓");
     }
   };

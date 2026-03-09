@@ -20,8 +20,7 @@ export async function GET(request: Request) {
   };
 
   if (type === "all" || type === "founders") {
-    const { data } = await supabase
-      .from("founder_profiles")
+    const { data } = await (supabase.from("founder_profiles") as any)
       .select("*, profile:user_id(id, full_name, avatar_url, city, is_verified)")
       .or(`startup_name.ilike.%${q}%,tagline.ilike.%${q}%,sector.ilike.%${q}%`)
       .eq("is_public", true)
@@ -30,8 +29,7 @@ export async function GET(request: Request) {
   }
 
   if (type === "all" || type === "investors") {
-    const { data } = await supabase
-      .from("investor_profiles")
+    const { data } = await (supabase.from("investor_profiles") as any)
       .select("*, profile:user_id(id, full_name, avatar_url, city, is_verified)")
       .or(`firm_name.ilike.%${q}%,investment_thesis.ilike.%${q}%`)
       .eq("is_public", true)
@@ -40,8 +38,7 @@ export async function GET(request: Request) {
   }
 
   if (type === "all" || type === "events") {
-    const { data } = await supabase
-      .from("events")
+    const { data } = await (supabase.from("events") as any)
       .select("*, organizer:organizer_id(full_name, avatar_url)")
       .or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
       .eq("status", "published")

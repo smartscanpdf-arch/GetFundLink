@@ -7,20 +7,20 @@ export default async function AdminDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const { data: profile } = await (supabase.from("profiles") as any).select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") redirect(`/dashboard/${profile?.role ?? "founder"}`);
 
   const [usersRes, kycRes, introsRes, ticketsRes, eventsRes] = await Promise.all([
-    supabase.from("profiles").select("id,role,created_at,kyc_status,plan", { count: "exact" }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("kyc_status", "pending"),
-    supabase.from("intro_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "open"),
-    supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "published"),
+    (supabase.from("profiles") as any).select("id,role,created_at,kyc_status,plan", { count: "exact" }),
+    (supabase.from("profiles") as any).select("id", { count: "exact", head: true }).eq("kyc_status", "pending"),
+    (supabase.from("intro_requests") as any).select("id", { count: "exact", head: true }).eq("status", "pending"),
+    (supabase.from("support_tickets") as any).select("id", { count: "exact", head: true }).eq("status", "open"),
+    (supabase.from("events") as any).select("id", { count: "exact", head: true }).eq("status", "published"),
   ]);
 
   const users    = usersRes.data ?? [];
   const byRole   = { founder: 0, investor: 0, partner: 0, admin: 0 };
-  users.forEach(u => { byRole[(u.role as keyof typeof byRole)]++; });
+  users.forEach((u: any) => { byRole[(u.role as keyof typeof byRole)]++; });
 
   return (
     <AdminDashboardClient

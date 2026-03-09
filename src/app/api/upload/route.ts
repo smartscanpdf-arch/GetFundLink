@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
   // Post-upload actions
   if (uploadType === "kyc" && docType) {
-    await supabase.from("kyc_documents").insert({
+    await (supabase.from("kyc_documents") as any).insert({
       user_id:   user.id,
       doc_type:  docType,
       file_path: uploadData.path,
@@ -65,19 +65,19 @@ export async function POST(request: Request) {
     });
 
     // Update profile KYC status to pending
-    await supabase.from("profiles")
+    await (supabase.from("profiles") as any)
       .update({ kyc_status: "pending" })
       .eq("id", user.id);
   }
 
   if (uploadType === "deck") {
-    await supabase.from("founder_profiles")
+    await (supabase.from("founder_profiles") as any)
       .update({ deck_url: uploadData.path, deck_name: file.name })
       .eq("user_id", user.id);
   }
 
   if (uploadType === "avatar") {
-    await supabase.from("profiles")
+    await (supabase.from("profiles") as any)
       .update({ avatar_url: publicUrl })
       .eq("id", user.id);
   }

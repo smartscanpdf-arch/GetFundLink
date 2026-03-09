@@ -8,8 +8,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: referrals } = await supabase
-    .from("referrals")
+  const { data: referrals } = await (supabase.from("referrals") as any)
     .select("*")
     .eq("referrer_id", user.id)
     .order("created_at", { ascending: false });
@@ -28,8 +27,7 @@ export async function POST(request: Request) {
 
   const code = generateReferralCode(user.id);
 
-  const { data, error } = await supabase
-    .from("referrals")
+  const { data, error } = await (supabase.from("referrals") as any)
     .upsert({ referrer_id: user.id, referred_email, code }, { onConflict: "code" })
     .select()
     .single();

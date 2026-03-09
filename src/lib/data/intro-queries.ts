@@ -41,8 +41,7 @@ export async function getIntroRequests(userId: string, role: "founder" | "invest
 export async function updateIntroStatus(introId: string, status: "accepted" | "declined" | "completed"): Promise<boolean> {
   try {
     const supabase = createServerClient();
-    const { error } = await supabase
-      .from("intro_requests")
+    const { error } = await (supabase.from("intro_requests") as any)
       .update({
         status,
         completed_at: status === "completed" ? new Date().toISOString() : null,

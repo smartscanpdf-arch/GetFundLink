@@ -8,12 +8,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const { data: profile } = await (supabase.from("profiles") as any).select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("kyc_documents")
+  const { data } = await (admin.from("kyc_documents") as any)
     .select("*, user:user_id(id, full_name, email, role)")
     .eq("status", "pending")
     .order("uploaded_at", { ascending: true });
@@ -27,49 +26,73 @@ export async function PATCH(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const { data: profile } = await (supabase.from("profiles") as any).select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
-  const { doc_id, status, note } = await request.json();
-  if (!doc_id || !status) return NextResponse.json({ error: "doc_id and status required" }, { status: 400 });
-
   const admin = createAdminClient();
+  const body = await request.json();
+  const { doc_id, status, note, user_id } = body;
 
-  // Update document
-  await admin.from("kyc_documents").update({
-    status, reviewer_id: user.id, review_note: note ?? null, reviewed_at: new Date().toISOString(),
-  }).eq("id", doc_id);
+  if (!status) {
+    return NextResponse.json({ error: "Missing status" }, { status: 400 });
+  }
 
-  // Get user info
-  const { data: doc } = await admin
-    .from("kyc_documents")
-    .select("user_id, user:user_id(email, full_name)")
-    .eq("id", doc_id)
-    .single();
+  const reviewNote = note ?? null;
+  let userId: string | null = null;
 
-  if (doc) {
+  if (doc_id) {
+    // Update document
+    await (admin.from("kyc_documents") as any).update({
+      status, 
+      reviewer_id: user.id, 
+      review_note: reviewNote, 
+      reviewed_at: new Date().toISOString(),
+    }).eq("id", doc_id);
+
+    // Get user info
+    const { data: doc } = await (admin.from("kyc_documents") as any)
+      .select("user_id, user:user_id(email, full_name)")
+      .eq("id", doc_id)
+      .single();
+
+    userId = doc?.user_id || null;
+  } else if (user_id) {
+    // Direct profile update without document
+    userId = user_id;
+  } else {
+    return NextResponse.json({ error: "Missing doc_id or user_id" }, { status: 400 });
+  }
+
+  if (userId) {
     // Update profile kyc_status
-    await admin.from("profiles").update({
+    await (admin.from("profiles") as any).update({
       kyc_status:      status,
       kyc_reviewed_at: new Date().toISOString(),
       is_verified:     status === "approved",
-    }).eq("id", doc.user_id);
+    }).eq("id", userId);
+
+    // Get user info for notification
+    const { data: userProfile } = await (admin.from("profiles") as any)
+      .select("email, full_name")
+      .eq("id", userId)
+      .single();
 
     // Notify user
-    await admin.from("notifications").insert({
-      user_id:    doc.user_id,
-      type:       `kyc_${status}`,
-      title:      `KYC verification ${status}`,
-      body:       note ?? (status === "approved" ? "Your identity has been verified." : "Please re-submit your documents."),
-      action_url: status === "approved" ? "/dashboard/founder" : "/dashboard/founder/kyc",
-    });
+    if (userProfile?.email) {
+      await (admin.from("notifications") as any).insert({
+        user_id:    userId,
+        type:       `kyc_${status}`,
+        title:      `KYC verification ${status}`,
+        body:       reviewNote ?? (status === "approved" ? "Your identity has been verified." : "Please re-submit your documents."),
+        action_url: status === "approved" ? "/dashboard/founder" : "/dashboard/founder/kyc",
+      });
 
-    // Send email
-    const u = doc.user as any;
-    if (u?.email) {
+      // Send email
       await sendKycStatusEmail({
-        to: u.email, name: u.full_name ?? "User",
-        status: status as "approved" | "rejected", note,
+        to: userProfile.email, 
+        name: userProfile.full_name ?? "User",
+        status: status as "approved" | "rejected", 
+        note: reviewNote,
       }).catch(console.error);
     }
   }

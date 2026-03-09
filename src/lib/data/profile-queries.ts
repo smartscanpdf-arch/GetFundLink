@@ -10,14 +10,14 @@ export async function getProfile(userId: string): Promise<Profile | null> {
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .single<Profile>();
 
     if (error) {
       console.error("Error fetching profile:", error);
       return null;
     }
 
-    return data as Profile;
+    return data;
   } catch (err) {
     console.error("Profile query error:", err);
     return null;
@@ -27,8 +27,8 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 export async function updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile | null> {
   try {
     const supabase = createServerClient();
-    const { data, error } = await supabase
-      .from("profiles")
+    const { data, error } = await (supabase
+      .from("profiles") as any)
       .update(updates)
       .eq("id", userId)
       .select()
@@ -39,7 +39,7 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
       return null;
     }
 
-    return data as Profile;
+    return data;
   } catch (err) {
     console.error("Profile update error:", err);
     return null;

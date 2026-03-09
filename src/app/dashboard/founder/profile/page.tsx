@@ -47,8 +47,8 @@ export default function FounderProfilePage() {
   useEffect(() => {
     if (!user?.id) return;
     Promise.all([
-      supabase.from("founder_profiles").select("*").eq("user_id", user.id).single(),
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase.from("founder_profiles").select("*").eq("user_id", user.id).single<any>(),
+      supabase.from("profiles").select("*").eq("id", user.id).single<any>(),
     ]).then(([{ data: fp }, { data: p }]) => {
       if (fp) {
         setStartupName(fp.startup_name ?? "");
@@ -74,7 +74,7 @@ export default function FounderProfilePage() {
   const save = async () => {
     if (!startupName) { toast.error("Startup name is required"); return; }
     setSaving(true);
-    const { error: fpErr } = await supabase.from("founder_profiles").upsert({
+    const { error: fpErr } = await (supabase.from("founder_profiles") as any).upsert({
       user_id:      user!.id,
       startup_name: startupName,
       tagline,
@@ -88,7 +88,7 @@ export default function FounderProfilePage() {
       website,
     }, { onConflict: "user_id" });
 
-    const { error: pErr } = await supabase.from("profiles").update({
+    const { error: pErr } = await (supabase.from("profiles") as any).update({
       full_name: fullName, bio, city, linkedin_url: linkedin,
     }).eq("id", user!.id);
 

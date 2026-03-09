@@ -16,8 +16,7 @@ export async function POST(request: Request) {
   }
 
   // Check investor profile
-  const { data: investorProfile } = await supabase
-    .from("investor_profiles")
+  const { data: investorProfile } = await (supabase.from("investor_profiles") as any)
     .select("id")
     .eq("user_id", user.id)
     .single();
@@ -27,8 +26,7 @@ export async function POST(request: Request) {
   }
 
   // Check for duplicate
-  const { data: existing } = await supabase
-    .from("intro_requests")
+  const { data: existing } = await (supabase.from("intro_requests") as any)
     .select("id, status")
     .eq("investor_id", user.id)
     .eq("founder_id", founder_id)
@@ -39,8 +37,7 @@ export async function POST(request: Request) {
   }
 
   // Create intro request
-  const { data: intro, error } = await supabase
-    .from("intro_requests")
+  const { data: intro, error } = await (supabase.from("intro_requests") as any)
     .insert({ investor_id: user.id, founder_id, message })
     .select()
     .single();
@@ -50,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   // Create notification for founder
-  await supabase.from("notifications").insert({
+  await (supabase.from("notifications") as any).insert({
     user_id:    founder_id,
     type:       "intro_request",
     title:      "New introduction request",
@@ -63,28 +60,27 @@ export async function POST(request: Request) {
     .from("profiles")
     .select("email, full_name")
     .eq("id", founder_id)
-    .single();
+    .single<{ email: string; full_name: string }>();
 
   const { data: investorData } = await supabase
     .from("profiles")
     .select("full_name")
     .eq("id", user.id)
-    .single();
+    .single<{ full_name: string }>();
 
   const { data: investorExtra } = await supabase
     .from("investor_profiles")
     .select("firm_name")
     .eq("user_id", user.id)
-    .single();
+    .single<{ firm_name: string }>();
 
   if (founderProfile?.email) {
     await sendIntroRequestEmail({
-      founderEmail: founderProfile.email,
+      to:           founderProfile.email,
       founderName:  founderProfile.full_name ?? "Founder",
       investorName: investorData?.full_name ?? "An investor",
-      investorFirm: investorExtra?.firm_name ?? "",
+      firmName:     investorExtra?.firm_name ?? "",
       message:      message ?? "",
-      introId:      intro.id,
     }).catch(console.error);
   }
 
@@ -110,7 +106,7 @@ export async function PATCH(request: Request) {
     .select("*, investor:investor_id(email, full_name), founder:founder_id(email, full_name, founder_profile:founder_profiles(startup_name))")
     .eq("id", intro_id)
     .eq("founder_id", user.id)
-    .single();
+    .single<any>();
 
   if (!intro) {
     return NextResponse.json({ error: "Intro not found" }, { status: 404 });
@@ -118,15 +114,14 @@ export async function PATCH(request: Request) {
 
   const newStatus = action === "accept" ? "accepted" : "declined";
 
-  const { error } = await supabase
-    .from("intro_requests")
+  const { error } = await (supabase.from("intro_requests") as any)
     .update({ status: newStatus, founder_note: note ?? null })
     .eq("id", intro_id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Notify investor
-  await supabase.from("notifications").insert({
+  await (supabase.from("notifications") as any).insert({
     user_id:    intro.investor_id,
     type:       `intro_${newStatus}`,
     title:      `Introduction ${newStatus}`,
