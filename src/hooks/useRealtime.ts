@@ -162,8 +162,7 @@ export function useNotificationSubscription(userId: string, onNewNotification?: 
   }, [userId, supabase, updateUnreadCount]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
-    const { error } = await supabase
-      .from("notifications")
+    const { error } = await (supabase.from("notifications") as any)
       .update({ is_read: true })
       .eq("id", notificationId);
 

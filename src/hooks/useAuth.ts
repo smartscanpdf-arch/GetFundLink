@@ -19,8 +19,7 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
+    const { data } = await (supabase.from("profiles") as any)
       .select("*")
       .eq("id", userId)
       .single();
