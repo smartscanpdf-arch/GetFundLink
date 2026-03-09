@@ -13,7 +13,7 @@ export default async function BrowsePage() {
     (supabase.from("intro_requests") as any).select("founder_id,status").eq("investor_id", user.id),
   ]);
 
-  const savedIds  = new Set((savedRaw ?? []).map((s: any) => s.founder_id));
+  const savedIds  = new Set<string>((savedRaw ?? []).map((s: any) => s.founder_id));
   const introMap  = Object.fromEntries((introsRaw ?? []).map((i: any) => [i.founder_id, i.status]));
 
   return <BrowseClient startups={startups ?? []} savedIds={savedIds} introMap={introMap} investorId={user.id}/>;
