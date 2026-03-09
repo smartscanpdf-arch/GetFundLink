@@ -13,7 +13,7 @@ export async function GET() {
     .order("last_message_at", { ascending: false });
 
   // Attach unread counts and other_user
-  const enriched = (threads ?? []).map(t => {
+  const enriched = (threads ?? []).map((t: any) => {
     const other = t.participant_a === user.id ? t.participant_b_profile : t.participant_a_profile;
     return { ...t, other_user: other };
   });
