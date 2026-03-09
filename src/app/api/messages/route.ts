@@ -37,12 +37,11 @@ export async function POST(request: Request) {
     const a = user.id < to_user_id ? user.id : to_user_id;
     const b = user.id < to_user_id ? to_user_id : user.id;
 
-    const { data: existing } = await supabase
-      .from("message_threads")
+    const { data: existing } = await (supabase.from("message_threads") as any)
       .select("id")
       .eq("participant_a", a)
       .eq("participant_b", b)
-      .single<{ id: string }>();
+      .single();
 
     if (existing) {
       tid = existing.id;
@@ -57,18 +56,17 @@ export async function POST(request: Request) {
 
   if (!tid) return NextResponse.json({ error: "Could not resolve thread" }, { status: 400 });
 
-  const { data: msg, error } = await supabase
-    .from("messages")
+  const { data: msg, error } = await (supabase.from("messages") as any)
     .insert({ thread_id: tid, sender_id: user.id, body: body.trim() })
     .select()
-    .single<any>();
+    .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Notify recipient
   if (to_user_id) {
-    const { data: sender } = await supabase.from("profiles").select("full_name").eq("id", user.id).single<{ full_name: string }>();
-    await supabase.from("notifications").insert({
+    const { data: sender } = await (supabase.from("profiles") as any).select("full_name").eq("id", user.id).single();
+    await (supabase.from("notifications") as any).insert({
       user_id:    to_user_id,
       type:       "message",
       title:      `New message from ${sender?.full_name ?? "someone"}`,
