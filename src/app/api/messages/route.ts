@@ -7,8 +7,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: threads } = await supabase
-    .from("message_threads")
+  const { data: threads } = await (supabase.from("message_threads") as any)
     .select("*, participant_a_profile:participant_a(id,full_name,avatar_url,role), participant_b_profile:participant_b(id,full_name,avatar_url,role)")
     .or(`participant_a.eq.${user.id},participant_b.eq.${user.id}`)
     .order("last_message_at", { ascending: false });
