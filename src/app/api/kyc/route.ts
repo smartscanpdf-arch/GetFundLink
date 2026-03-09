@@ -31,6 +31,11 @@ export async function PATCH(request: Request) {
   if (profile?.role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
   const admin = createAdminClient();
+  const { doc_id, status, note } = await request.json();
+
+  if (!doc_id || !status) {
+    return NextResponse.json({ error: "Missing doc_id or status" }, { status: 400 });
+  }
 
   // Update document
   await admin.from("kyc_documents").update({
