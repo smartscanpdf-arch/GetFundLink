@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { data, error } = await supabase.from("events").insert({ ...body, organizer_id: user.id }).select().single<any>();
+  const { data, error } = await (supabase.from("events") as any).insert({ ...body, organizer_id: user.id }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ event: data });
 }
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, ...updates } = await request.json();
-  const { data, error } = await (supabase.from("events") as any).update(updates).eq("id", id).eq("organizer_id", user.id).select().single<any>();
+  const { data, error } = await (supabase.from("events") as any).update(updates).eq("id", id).eq("organizer_id", user.id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ event: data });
 }
