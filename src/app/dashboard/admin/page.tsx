@@ -20,7 +20,7 @@ export default async function AdminDashboardPage() {
 
   const users    = usersRes.data ?? [];
   const byRole   = { founder: 0, investor: 0, partner: 0, admin: 0 };
-  users.forEach(u => { byRole[(u.role as keyof typeof byRole)]++; });
+  users.forEach((u: any) => { byRole[(u.role as keyof typeof byRole)]++; });
 
   return (
     <AdminDashboardClient
