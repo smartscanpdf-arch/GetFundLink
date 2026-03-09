@@ -32,51 +32,70 @@ export async function PATCH(request: Request) {
 
   const admin = createAdminClient();
   const body = await request.json();
-  const { doc_id, status, note } = body;
+  const { doc_id, status, note, user_id } = body;
 
-  if (!doc_id || !status) {
-    return NextResponse.json({ error: "Missing doc_id or status" }, { status: 400 });
+  if (!status) {
+    return NextResponse.json({ error: "Missing status" }, { status: 400 });
   }
 
-  // Update document
   const reviewNote = note ?? null;
-  await admin.from("kyc_documents").update({
-    status, 
-    reviewer_id: user.id, 
-    review_note: reviewNote, 
-    reviewed_at: new Date().toISOString(),
-  } as Record<string, any>).eq("id", doc_id);
+  let userId: string | null = null;
 
-  // Get user info
-  const { data: doc } = await admin
-    .from("kyc_documents")
-    .select("user_id, user:user_id(email, full_name)")
-    .eq("id", doc_id)
-    .single<{ user_id: string; user: { email: string; full_name: string } }>();
+  if (doc_id) {
+    // Update document
+    await admin.from("kyc_documents").update({
+      status, 
+      reviewer_id: user.id, 
+      review_note: reviewNote, 
+      reviewed_at: new Date().toISOString(),
+    } as Record<string, any>).eq("id", doc_id);
 
-  if (doc) {
+    // Get user info
+    const { data: doc } = await admin
+      .from("kyc_documents")
+      .select("user_id, user:user_id(email, full_name)")
+      .eq("id", doc_id)
+      .single<{ user_id: string; user: { email: string; full_name: string } }>();
+
+    userId = doc?.user_id || null;
+  } else if (user_id) {
+    // Direct profile update without document
+    userId = user_id;
+  } else {
+    return NextResponse.json({ error: "Missing doc_id or user_id" }, { status: 400 });
+  }
+
+  if (userId) {
     // Update profile kyc_status
     await admin.from("profiles").update({
       kyc_status:      status,
       kyc_reviewed_at: new Date().toISOString(),
       is_verified:     status === "approved",
-    } as Record<string, any>).eq("id", doc.user_id);
+    } as Record<string, any>).eq("id", userId);
+
+    // Get user info for notification
+    const { data: userProfile } = await admin
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", userId)
+      .single<{ email: string; full_name: string }>();
 
     // Notify user
-    await admin.from("notifications").insert({
-      user_id:    doc.user_id,
-      type:       `kyc_${status}`,
-      title:      `KYC verification ${status}`,
-      body:       reviewNote ?? (status === "approved" ? "Your identity has been verified." : "Please re-submit your documents."),
-      action_url: status === "approved" ? "/dashboard/founder" : "/dashboard/founder/kyc",
-    });
+    if (userProfile?.email) {
+      await admin.from("notifications").insert({
+        user_id:    userId,
+        type:       `kyc_${status}`,
+        title:      `KYC verification ${status}`,
+        body:       reviewNote ?? (status === "approved" ? "Your identity has been verified." : "Please re-submit your documents."),
+        action_url: status === "approved" ? "/dashboard/founder" : "/dashboard/founder/kyc",
+      });
 
-    // Send email
-    const u = doc.user as any;
-    if (u?.email) {
+      // Send email
       await sendKycStatusEmail({
-        to: u.email, name: u.full_name ?? "User",
-        status: status as "approved" | "rejected", note: reviewNote,
+        to: userProfile.email, 
+        name: userProfile.full_name ?? "User",
+        status: status as "approved" | "rejected", 
+        note: reviewNote,
       }).catch(console.error);
     }
   }

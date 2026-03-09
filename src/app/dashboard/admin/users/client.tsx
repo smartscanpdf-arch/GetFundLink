@@ -26,22 +26,35 @@ export function AdminUsersClient({ users: init }: { users: any[] }) {
 
   const updateKyc = async (userId: string, status: "approved"|"rejected") => {
     setActing(true);
-    // Find any pending KYC doc for this user and update
-    const { data: doc } = await supabase.from("kyc_documents").select("id").eq("user_id", userId).eq("status","pending").limit(1).single<{ id: string }>();
-    if (doc) {
-      await fetch("/api/kyc", {
+    try {
+      // Find any pending KYC doc for this user and update
+      const { data: doc } = await supabase.from("kyc_documents").select("id").eq("user_id", userId).eq("status","pending").limit(1).single<{ id: string }>();
+      
+      // Use API endpoint for both cases
+      const response = await fetch("/api/kyc", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doc_id: doc.id, status }),
+        body: JSON.stringify({ 
+          doc_id: doc?.id || null, 
+          status,
+          user_id: userId 
+        }),
       });
-    } else {
-      // Direct profile update if no doc
-      await supabase.from("profiles").update({ kyc_status: status, is_verified: status==="approved" } as Record<string, any>).eq("id", userId);
+
+      if (!response.ok) {
+        throw new Error("Failed to update KYC");
+      }
+
+      // Update UI
+      setUsers(p => p.map(u => u.id === userId ? { ...u, kyc_status: status, is_verified: status==="approved" } : u));
+      if (detail?.id === userId) setDetail((p: any) => ({ ...p, kyc_status: status }));
+      toast.success(`KYC ${status}`);
+    } catch (error) {
+      console.error("Error updating KYC:", error);
+      toast.error("Failed to update KYC status");
+    } finally {
+      setActing(false);
     }
-    setUsers(p => p.map(u => u.id === userId ? { ...u, kyc_status: status, is_verified: status==="approved" } : u));
-    if (detail?.id === userId) setDetail((p: any) => ({ ...p, kyc_status: status }));
-    setActing(false);
-    toast.success(`KYC ${status}`);
   };
 
   const ROLE_COLOR: Record<string, any> = { founder:"teal", investor:"indigo", partner:"amber", admin:"slate" };
