@@ -13,11 +13,10 @@ export async function GET(request: Request) {
       // Get user role to redirect to correct dashboard
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
+        const { data: profile } = await (supabase.from("profiles") as any)
           .select("role, onboarding_done, kyc_status")
           .eq("id", user.id)
-          .single<{ role: string; onboarding_done: boolean; kyc_status: string }>();
+          .single();
 
         const role = profile?.role ?? "founder";
 

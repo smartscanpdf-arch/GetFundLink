@@ -8,8 +8,8 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [{ data: subscription }, { data: invoices }] = await Promise.all([
-    supabase.from("subscriptions").select("*").eq("user_id", user.id).single<any>(),
-    supabase.from("invoices").select("*").eq("user_id", user.id)
+    (supabase.from("subscriptions") as any).select("*").eq("user_id", user.id).single(),
+    (supabase.from("invoices") as any).select("*").eq("user_id", user.id)
       .order("created_at", { ascending: false }).limit(12),
   ]);
 
@@ -39,8 +39,7 @@ export async function POST(request: Request) {
 
   const amount = PLAN_PRICES[plan] ?? 0;
 
-  const { data, error } = await supabase
-    .from("subscriptions")
+  const { data, error } = await (supabase.from("subscriptions") as any)
     .upsert({
       user_id:               user.id,
       plan,
@@ -49,12 +48,12 @@ export async function POST(request: Request) {
       current_period_end:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     }, { onConflict: "user_id" })
     .select()
-    .single<any>();
+    .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Update profile plan
-  await supabase.from("profiles").update({ plan } as Record<string, any>).eq("id", user.id);
+  await (supabase.from("profiles") as any).update({ plan }).eq("id", user.id);
 
   return NextResponse.json({
     subscription: data,
@@ -69,12 +68,11 @@ export async function DELETE() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { error } = await supabase
-    .from("subscriptions")
+  const { error } = await (supabase.from("subscriptions") as any)
     .update({
       cancel_at_period_end: true,
       cancelled_at:         new Date().toISOString(),
-    } as Record<string, any>)
+    })
     .eq("user_id", user.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

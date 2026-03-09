@@ -16,16 +16,15 @@ export async function POST(request: Request) {
   }
 
   // Create ticket
-  const { data: ticket, error: ticketError } = await supabase
-    .from("support_tickets")
+  const { data: ticket, error: ticketError } = await (supabase.from("support_tickets") as any)
     .insert({ user_id: user.id, category, priority: priority ?? "medium", subject })
     .select()
-    .single<{ id: string }>();
+    .single();
 
   if (ticketError) return NextResponse.json({ error: ticketError.message }, { status: 500 });
 
   // Create first message
-  await supabase.from("support_messages").insert({
+  await (supabase.from("support_messages") as any).insert({
     ticket_id: ticket.id,
     sender_id: user.id,
     body:      message,
@@ -59,8 +58,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: tickets, error } = await supabase
-    .from("support_tickets")
+  const { data: tickets, error } = await (supabase.from("support_tickets") as any)
     .select("*, messages:support_messages(*, sender:sender_id(full_name, role))")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -77,11 +75,10 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Check admin
-  const { data: profile } = await supabase
-    .from("profiles")
+  const { data: profile } = await (supabase.from("profiles") as any)
     .select("role")
     .eq("id", user.id)
-    .single<{ role: string }>();
+    .single();
 
   if (profile?.role !== "admin") {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
@@ -96,8 +93,7 @@ export async function PATCH(request: Request) {
 
   // Update status if provided
   if (status) {
-    await supabase
-      .from("support_tickets")
+    await (supabase.from("support_tickets") as any)
       .update({
         status,
         resolved_at: status === "resolved" ? new Date().toISOString() : null,
@@ -107,7 +103,7 @@ export async function PATCH(request: Request) {
 
   // Add reply if provided
   if (reply) {
-    await supabase.from("support_messages").insert({
+    await (supabase.from("support_messages") as any).insert({
       ticket_id,
       sender_id: user.id,
       body:      reply,
@@ -115,11 +111,10 @@ export async function PATCH(request: Request) {
     });
 
     // Get ticket + user info for email
-    const { data: ticket } = await supabase
-      .from("support_tickets")
+    const { data: ticket } = await (supabase.from("support_tickets") as any)
       .select("subject, user:user_id(email, full_name)")
       .eq("id", ticket_id)
-      .single<{ subject: string; user: { email: string; full_name: string } }>();
+      .single();
 
     const ticketUser = (ticket?.user as any);
     if (ticketUser?.email) {
@@ -133,8 +128,8 @@ export async function PATCH(request: Request) {
     }
 
     // Notify user
-    await supabase.from("notifications").insert({
-      user_id:    (await supabase.from("support_tickets").select("user_id").eq("id", ticket_id).single<{ user_id: string }>()).data?.user_id,
+    await (supabase.from("notifications") as any).insert({
+      user_id:    (await (supabase.from("support_tickets") as any).select("user_id").eq("id", ticket_id).single()).data?.user_id,
       type:       "support_reply",
       title:      "Support team replied to your ticket",
       body:       reply.slice(0, 80),

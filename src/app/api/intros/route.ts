@@ -16,23 +16,21 @@ export async function POST(request: Request) {
   }
 
   // Check investor profile
-  const { data: investorProfile } = await supabase
-    .from("investor_profiles")
+  const { data: investorProfile } = await (supabase.from("investor_profiles") as any)
     .select("id")
     .eq("user_id", user.id)
-    .single<{ id: string }>();
+    .single();
 
   if (!investorProfile) {
     return NextResponse.json({ error: "Investor profile not found" }, { status: 403 });
   }
 
   // Check for duplicate
-  const { data: existing } = await supabase
-    .from("intro_requests")
+  const { data: existing } = await (supabase.from("intro_requests") as any)
     .select("id, status")
     .eq("investor_id", user.id)
     .eq("founder_id", founder_id)
-    .single<{ id: string; status: string }>();
+    .single();
 
   if (existing) {
     return NextResponse.json({ error: "Intro request already exists", status: existing.status }, { status: 409 });

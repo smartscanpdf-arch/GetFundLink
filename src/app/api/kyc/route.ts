@@ -8,12 +8,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single<{ role: string }>();
+  const { data: profile } = await (supabase.from("profiles") as any).select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("kyc_documents")
+  const { data } = await (admin.from("kyc_documents") as any)
     .select("*, user:user_id(id, full_name, email, role)")
     .eq("status", "pending")
     .order("uploaded_at", { ascending: true });
@@ -27,7 +26,7 @@ export async function PATCH(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single<{ role: string }>();
+  const { data: profile } = await (supabase.from("profiles") as any).select("role").eq("id", user.id).single();
   if (profile?.role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
   const admin = createAdminClient();

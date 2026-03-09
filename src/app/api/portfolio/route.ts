@@ -7,8 +7,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: investments } = await supabase
-    .from("portfolio_investments")
+  const { data: investments } = await (supabase.from("portfolio_investments") as any)
     .select("*, founder:founder_id(id, full_name, avatar_url, founder_profile:founder_profiles(startup_name, sector, stage))")
     .eq("investor_id", user.id)
     .order("invested_at", { ascending: false });
@@ -27,8 +26,7 @@ export async function POST(request: Request) {
 
   if (!company_name) return NextResponse.json({ error: "company_name required" }, { status: 400 });
 
-  const { data, error } = await supabase
-    .from("portfolio_investments")
+  const { data, error } = await (supabase.from("portfolio_investments") as any)
     .insert({
       investor_id: user.id,
       company_name, sector, stage, amount, equity_pct,
@@ -36,7 +34,7 @@ export async function POST(request: Request) {
       notes, founder_id: founder_id || null,
     })
     .select()
-    .single<any>();
+    .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ investment: data });
@@ -51,8 +49,7 @@ export async function DELETE(request: Request) {
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const { error } = await supabase
-    .from("portfolio_investments")
+  const { error } = await (supabase.from("portfolio_investments") as any)
     .delete()
     .eq("id", id)
     .eq("investor_id", user.id);
