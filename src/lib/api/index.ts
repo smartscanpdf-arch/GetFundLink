@@ -203,6 +203,7 @@ export async function parseRequestBody<T = any>(request: Request): Promise<{ dat
 // ─── Rate limiting (basic implementation) ──────────────────────────────────────
 
 const rateLimitStore = new Map<string, { count: number; reset: number }>();
+let lastCleanup = Date.now();
 
 export function checkRateLimit(identifier: string, limit = 10, windowMs = 60000): { allowed: boolean; remaining: number } {
   const now = Date.now();
@@ -218,18 +219,21 @@ export function checkRateLimit(identifier: string, limit = 10, windowMs = 60000)
   }
 
   entry.count++;
-  return { allowed: true, remaining: limit - entry.count };
-}
-
-// Clean up old entries (run periodically)
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.reset < now) {
-      rateLimitStore.delete(key);
+  
+  // Cleanup old entries if needed (every 60 seconds)
+  if (now - lastCleanup > 60000) {
+    lastCleanup = now;
+    const keys = Array.from(rateLimitStore.keys());
+    for (const key of keys) {
+      const e = rateLimitStore.get(key);
+      if (e && e.reset < now) {
+        rateLimitStore.delete(key);
+      }
     }
   }
-}, 60000);
+  
+  return { allowed: true, remaining: limit - entry.count };
+}
 
 // ─── CORS headers ─────────────────────────────────────────────────────────────
 
