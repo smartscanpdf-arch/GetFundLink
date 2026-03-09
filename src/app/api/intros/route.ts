@@ -117,15 +117,14 @@ export async function PATCH(request: Request) {
 
   const newStatus = action === "accept" ? "accepted" : "declined";
 
-  const { error } = await supabase
-    .from("intro_requests")
-    .update({ status: newStatus, founder_note: note ?? null } as Record<string, any>)
+  const { error } = await (supabase.from("intro_requests") as any)
+    .update({ status: newStatus, founder_note: note ?? null })
     .eq("id", intro_id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Notify investor
-  await supabase.from("notifications").insert({
+  await (supabase.from("notifications") as any).insert({
     user_id:    intro.investor_id,
     type:       `intro_${newStatus}`,
     title:      `Introduction ${newStatus}`,
