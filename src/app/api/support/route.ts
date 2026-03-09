@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   if (admins?.length) {
     await (admin.from("notifications") as any).insert(
-      admins.map(a => ({
+      admins.map((a: any) => ({
         user_id:    a.id,
         type:       "new_support_ticket",
         title:      `New ${priority ?? "medium"} priority ticket`,
