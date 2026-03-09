@@ -93,7 +93,7 @@ export async function requireRole(request: Request, allowedRoles: string[]): Pro
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single();
+    .single<{ role: string }>();
 
   if (error || !profile) {
     return forbiddenResponse("Profile not found");

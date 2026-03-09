@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const { data, error } = await supabase.from("documents")
-    .insert({ ...body, owner_id: user.id }).select().single();
+    .insert({ ...body, owner_id: user.id }).select().single<any>();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ document: data });
 }

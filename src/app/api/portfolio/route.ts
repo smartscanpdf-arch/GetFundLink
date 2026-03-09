@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       notes, founder_id: founder_id || null,
     })
     .select()
-    .single();
+    .single<any>();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ investment: data });

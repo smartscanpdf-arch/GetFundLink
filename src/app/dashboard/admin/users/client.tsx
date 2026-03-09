@@ -36,7 +36,7 @@ export function AdminUsersClient({ users: init }: { users: any[] }) {
       });
     } else {
       // Direct profile update if no doc
-      await supabase.from("profiles").update({ kyc_status: status, is_verified: status==="approved" }).eq("id", userId);
+      await supabase.from("profiles").update({ kyc_status: status, is_verified: status==="approved" } as Record<string, any>).eq("id", userId);
     }
     setUsers(p => p.map(u => u.id === userId ? { ...u, kyc_status: status, is_verified: status==="approved" } : u));
     if (detail?.id === userId) setDetail((p: any) => ({ ...p, kyc_status: status }));

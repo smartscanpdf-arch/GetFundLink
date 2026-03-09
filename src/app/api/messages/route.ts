@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       .select("id")
       .eq("participant_a", a)
       .eq("participant_b", b)
-      .single();
+      .single<{ id: string }>();
 
     if (existing) {
       tid = existing.id;
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         .from("message_threads")
         .insert({ participant_a: a, participant_b: b })
         .select("id")
-        .single();
+        .single<{ id: string }>();
       tid = newThread?.id;
     }
   }
@@ -63,13 +63,13 @@ export async function POST(request: Request) {
     .from("messages")
     .insert({ thread_id: tid, sender_id: user.id, body: body.trim() })
     .select()
-    .single();
+    .single<any>();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Notify recipient
   if (to_user_id) {
-    const { data: sender } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+    const { data: sender } = await supabase.from("profiles").select("full_name").eq("id", user.id).single<{ full_name: string }>();
     await supabase.from("notifications").insert({
       user_id:    to_user_id,
       type:       "message",

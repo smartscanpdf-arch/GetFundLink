@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     .from("support_tickets")
     .insert({ user_id: user.id, category, priority: priority ?? "medium", subject })
     .select()
-    .single();
+    .single<{ id: string }>();
 
   if (ticketError) return NextResponse.json({ error: ticketError.message }, { status: 500 });
 
@@ -82,7 +82,7 @@ export async function PATCH(request: Request) {
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single();
+    .single<{ role: string }>();
 
   if (profile?.role !== "admin") {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
@@ -120,7 +120,7 @@ export async function PATCH(request: Request) {
       .from("support_tickets")
       .select("subject, user:user_id(email, full_name)")
       .eq("id", ticket_id)
-      .single();
+      .single<{ subject: string; user: { email: string; full_name: string } }>();
 
     const ticketUser = (ticket?.user as any);
     if (ticketUser?.email) {
@@ -135,7 +135,7 @@ export async function PATCH(request: Request) {
 
     // Notify user
     await supabase.from("notifications").insert({
-      user_id:    (await supabase.from("support_tickets").select("user_id").eq("id", ticket_id).single()).data?.user_id,
+      user_id:    (await supabase.from("support_tickets").select("user_id").eq("id", ticket_id).single<{ user_id: string }>()).data?.user_id,
       type:       "support_reply",
       title:      "Support team replied to your ticket",
       body:       reply.slice(0, 80),

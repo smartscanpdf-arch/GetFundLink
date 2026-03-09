@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     .from("investor_profiles")
     .select("id")
     .eq("user_id", user.id)
-    .single();
+    .single<{ id: string }>();
 
   if (!investorProfile) {
     return NextResponse.json({ error: "Investor profile not found" }, { status: 403 });
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     .select("id, status")
     .eq("investor_id", user.id)
     .eq("founder_id", founder_id)
-    .single();
+    .single<{ id: string; status: string }>();
 
   if (existing) {
     return NextResponse.json({ error: "Intro request already exists", status: existing.status }, { status: 409 });
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     .from("intro_requests")
     .insert({ investor_id: user.id, founder_id, message })
     .select()
-    .single();
+    .single<{ id: string }>();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -63,19 +63,19 @@ export async function POST(request: Request) {
     .from("profiles")
     .select("email, full_name")
     .eq("id", founder_id)
-    .single();
+    .single<{ email: string; full_name: string }>();
 
   const { data: investorData } = await supabase
     .from("profiles")
     .select("full_name")
     .eq("id", user.id)
-    .single();
+    .single<{ full_name: string }>();
 
   const { data: investorExtra } = await supabase
     .from("investor_profiles")
     .select("firm_name")
     .eq("user_id", user.id)
-    .single();
+    .single<{ firm_name: string }>();
 
   if (founderProfile?.email) {
     await sendIntroRequestEmail({
@@ -110,7 +110,7 @@ export async function PATCH(request: Request) {
     .select("*, investor:investor_id(email, full_name), founder:founder_id(email, full_name, founder_profile:founder_profiles(startup_name))")
     .eq("id", intro_id)
     .eq("founder_id", user.id)
-    .single();
+    .single<any>();
 
   if (!intro) {
     return NextResponse.json({ error: "Intro not found" }, { status: 404 });
@@ -120,7 +120,7 @@ export async function PATCH(request: Request) {
 
   const { error } = await supabase
     .from("intro_requests")
-    .update({ status: newStatus, founder_note: note ?? null })
+    .update({ status: newStatus, founder_note: note ?? null } as Record<string, any>)
     .eq("id", intro_id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -17,7 +17,7 @@ export async function GET(request: Request) {
           .from("profiles")
           .select("role, onboarding_done, kyc_status")
           .eq("id", user.id)
-          .single();
+          .single<{ role: string; onboarding_done: boolean; kyc_status: string }>();
 
         const role = profile?.role ?? "founder";
 

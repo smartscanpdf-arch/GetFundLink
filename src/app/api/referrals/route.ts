@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     .from("referrals")
     .upsert({ referrer_id: user.id, referred_email, code }, { onConflict: "code" })
     .select()
-    .single();
+    .single<any>();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ referral: data });
