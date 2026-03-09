@@ -47,11 +47,10 @@ export async function POST(request: Request) {
     if (existing) {
       tid = existing.id;
     } else {
-      const { data: newThread } = await supabase
-        .from("message_threads")
+      const { data: newThread } = await (supabase.from("message_threads") as any)
         .insert({ participant_a: a, participant_b: b })
         .select("id")
-        .single<{ id: string }>();
+        .single();
       tid = newThread?.id;
     }
   }
