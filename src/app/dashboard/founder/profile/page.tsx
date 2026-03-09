@@ -86,11 +86,11 @@ export default function FounderProfilePage() {
       team_size:    teamSize    ? parseInt(teamSize)                         : null,
       founded_year: foundedYear ? parseInt(foundedYear)                     : null,
       website,
-    }, { onConflict: "user_id" });
+    } as Record<string, any>, { onConflict: "user_id" });
 
     const { error: pErr } = await supabase.from("profiles").update({
       full_name: fullName, bio, city, linkedin_url: linkedin,
-    }).eq("id", user!.id);
+    } as Record<string, any>).eq("id", user!.id);
 
     setSaving(false);
     if (fpErr || pErr) { toast.error("Save failed. Please try again."); return; }
