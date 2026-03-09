@@ -5,9 +5,7 @@ export async function middleware(request: NextRequest) {
   try {
     return await updateSession(request);
   } catch (error) {
-    // If middleware fails, just pass through the request
-    // This prevents build-time errors when env vars are not available
-    console.error("[Middleware] Error:", error instanceof Error ? error.message : "Unknown error");
+    // Silently fail and pass through request if middleware errors
     return NextResponse.next({ request });
   }
 }
