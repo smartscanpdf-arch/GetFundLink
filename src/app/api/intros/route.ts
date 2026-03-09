@@ -76,12 +76,11 @@ export async function POST(request: Request) {
 
   if (founderProfile?.email) {
     await sendIntroRequestEmail({
-      founderEmail: founderProfile.email,
+      to:           founderProfile.email,
       founderName:  founderProfile.full_name ?? "Founder",
       investorName: investorData?.full_name ?? "An investor",
-      investorFirm: investorExtra?.firm_name ?? "",
+      firmName:     investorExtra?.firm_name ?? "",
       message:      message ?? "",
-      introId:      intro.id,
     }).catch(console.error);
   }
 

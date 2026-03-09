@@ -107,3 +107,43 @@ export async function sendSupportReplyEmail({
     console.error("[Email] Failed to send support reply email:", error);
   }
 }
+
+export async function sendKycStatusEmail({
+  to,
+  name,
+  status,
+  note,
+}: {
+  to: string;
+  name: string;
+  status: "approved" | "rejected" | "pending";
+  note?: string;
+}) {
+  if (!resend) {
+    console.warn("[Email] Resend API key not configured. Email not sent.");
+    return;
+  }
+
+  try {
+    const statusMessage = {
+      approved: "Your KYC verification has been approved! You can now access all premium features.",
+      rejected: "Your KYC verification was not approved. Please review the feedback and resubmit.",
+      pending: "Your KYC verification is being reviewed. We'll notify you soon.",
+    };
+
+    await resend.emails.send({
+      from: "FundLink <noreply@fundlink.app>",
+      to,
+      subject: `KYC Verification Status Update`,
+      html: `
+        <h2>KYC Verification Status</h2>
+        <p>Hi ${name},</p>
+        <p>${statusMessage[status]}</p>
+        ${note ? `<p><strong>Feedback:</strong> ${note}</p>` : ""}
+        <p><a href="https://fundlink.app/dashboard">View your dashboard</a></p>
+      `,
+    });
+  } catch (error) {
+    console.error("[Email] Failed to send KYC status email:", error);
+  }
+}
