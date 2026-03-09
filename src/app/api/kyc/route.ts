@@ -31,15 +31,20 @@ export async function PATCH(request: Request) {
   if (profile?.role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
   const admin = createAdminClient();
-  const { doc_id, status, note } = await request.json();
+  const body = await request.json();
+  const { doc_id, status, note } = body;
 
   if (!doc_id || !status) {
     return NextResponse.json({ error: "Missing doc_id or status" }, { status: 400 });
   }
 
   // Update document
+  const reviewNote = note ?? null;
   await admin.from("kyc_documents").update({
-    status, reviewer_id: user.id, review_note: note ?? null, reviewed_at: new Date().toISOString(),
+    status, 
+    reviewer_id: user.id, 
+    review_note: reviewNote, 
+    reviewed_at: new Date().toISOString(),
   } as Record<string, any>).eq("id", doc_id);
 
   // Get user info
@@ -62,7 +67,7 @@ export async function PATCH(request: Request) {
       user_id:    doc.user_id,
       type:       `kyc_${status}`,
       title:      `KYC verification ${status}`,
-      body:       note ?? (status === "approved" ? "Your identity has been verified." : "Please re-submit your documents."),
+      body:       reviewNote ?? (status === "approved" ? "Your identity has been verified." : "Please re-submit your documents."),
       action_url: status === "approved" ? "/dashboard/founder" : "/dashboard/founder/kyc",
     });
 
@@ -71,7 +76,7 @@ export async function PATCH(request: Request) {
     if (u?.email) {
       await sendKycStatusEmail({
         to: u.email, name: u.full_name ?? "User",
-        status: status as "approved" | "rejected", note,
+        status: status as "approved" | "rejected", note: reviewNote,
       }).catch(console.error);
     }
   }
