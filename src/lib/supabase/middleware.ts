@@ -5,14 +5,17 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   // Check if Supabase environment variables are set
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("[Supabase] Missing environment variables. Skipping auth session update.");
     return supabaseResponse;
   }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
@@ -27,32 +30,35 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session — do NOT remove this
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    // Refresh session — do NOT remove this
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const url = request.nextUrl.clone();
-  const isAuthRoute = url.pathname.startsWith("/auth/");
-  const isDashRoute = url.pathname.startsWith("/dashboard/");
-  const isPublic    = url.pathname === "/" || url.pathname.startsWith("/landing") || url.pathname.startsWith("/pricing");
+    const url = request.nextUrl.clone();
+    const isAuthRoute = url.pathname.startsWith("/auth/");
+    const isDashRoute = url.pathname.startsWith("/dashboard/");
 
-  // Not logged in → redirect to login
-  if (!user && isDashRoute) {
-    url.pathname = "/auth/login";
-    url.searchParams.set("redirectTo", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
-  }
+    // Not logged in → redirect to login
+    if (!user && isDashRoute) {
+      url.pathname = "/auth/login";
+      url.searchParams.set("redirectTo", request.nextUrl.pathname);
+      return NextResponse.redirect(url);
+    }
 
-  // Logged in + trying to hit auth pages → redirect to their dashboard
-  if (user && isAuthRoute) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    // Logged in + trying to hit auth pages → redirect to their dashboard
+    if (user && isAuthRoute) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-    const role = profile?.role ?? "founder";
-    url.pathname = `/dashboard/${role}`;
-    return NextResponse.redirect(url);
+      const role = profile?.role ?? "founder";
+      url.pathname = `/dashboard/${role}`;
+      return NextResponse.redirect(url);
+    }
+  } catch (error) {
+    console.warn("[Supabase] Error during auth session update:", error instanceof Error ? error.message : error);
   }
 
   return supabaseResponse;
