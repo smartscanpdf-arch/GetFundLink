@@ -39,18 +39,17 @@ export async function POST(request: Request) {
   }
 
   // Create intro request
-  const { data: intro, error } = await supabase
-    .from("intro_requests")
+  const { data: intro, error } = await (supabase.from("intro_requests") as any)
     .insert({ investor_id: user.id, founder_id, message })
     .select()
-    .single<{ id: string }>();
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   // Create notification for founder
-  await supabase.from("notifications").insert({
+  await (supabase.from("notifications") as any).insert({
     user_id:    founder_id,
     type:       "intro_request",
     title:      "New introduction request",
