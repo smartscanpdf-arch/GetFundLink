@@ -2,16 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  // Check if Supabase environment variables are set (must be non-empty strings)
+  // Check if Supabase environment variables are set BEFORE creating response
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Gracefully skip auth when env vars are missing
-    return supabaseResponse;
+    // Return early if env vars are missing - don't create supabase client
+    return NextResponse.next({ request });
   }
+
+  let supabaseResponse = NextResponse.next({ request });
 
   let supabase;
   try {
