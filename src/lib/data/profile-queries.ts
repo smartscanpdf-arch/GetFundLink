@@ -27,12 +27,12 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 export async function updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile | null> {
   try {
     const supabase = createServerClient();
-    const { data, error } = await supabase
-      .from("profiles")
-      .update(updates as Record<string, any>)
+    const { data, error } = await (supabase
+      .from("profiles") as any)
+      .update(updates)
       .eq("id", userId)
       .select()
-      .single<Profile>();
+      .single();
 
     if (error) {
       console.error("Error updating profile:", error);
