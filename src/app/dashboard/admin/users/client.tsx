@@ -27,7 +27,7 @@ export function AdminUsersClient({ users: init }: { users: any[] }) {
   const updateKyc = async (userId: string, status: "approved"|"rejected") => {
     setActing(true);
     // Find any pending KYC doc for this user and update
-    const { data: doc } = await supabase.from("kyc_documents").select("id").eq("user_id", userId).eq("status","pending").limit(1).single();
+    const { data: doc } = await supabase.from("kyc_documents").select("id").eq("user_id", userId).eq("status","pending").limit(1).single<{ id: string }>();
     if (doc) {
       await fetch("/api/kyc", {
         method: "PATCH",
