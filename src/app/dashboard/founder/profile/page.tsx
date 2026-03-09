@@ -47,8 +47,8 @@ export default function FounderProfilePage() {
   useEffect(() => {
     if (!user?.id) return;
     Promise.all([
-      supabase.from("founder_profiles").select("*").eq("user_id", user.id).single(),
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase.from("founder_profiles").select("*").eq("user_id", user.id).single<any>(),
+      supabase.from("profiles").select("*").eq("id", user.id).single<any>(),
     ]).then(([{ data: fp }, { data: p }]) => {
       if (fp) {
         setStartupName(fp.startup_name ?? "");
