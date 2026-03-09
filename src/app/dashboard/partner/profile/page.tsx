@@ -24,7 +24,7 @@ export default function PartnerProfilePage() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("partner_profiles").select("*").eq("user_id", user.id).single(),
+      (supabase.from("partner_profiles") as any).select("*").eq("user_id", user.id).single(),
     ]).then(([{ data: pp }]) => {
       if (pp) {
         setOrgName(pp.org_name ?? "");
@@ -49,11 +49,11 @@ export default function PartnerProfilePage() {
     if (!user) return;
     setSaving(true);
     const [r1, r2] = await Promise.all([
-      supabase.from("partner_profiles").upsert({
+      (supabase.from("partner_profiles") as any).upsert({
         user_id: user.id, org_name: orgName, org_type: orgType,
         description: desc, website, focus_areas: focuses,
       }, { onConflict: "user_id" }),
-      supabase.from("profiles").update({
+      (supabase.from("profiles") as any).update({
         bio, city, linkedin_url: linkedin, full_name: profile?.full_name,
       }).eq("id", user.id),
     ]);

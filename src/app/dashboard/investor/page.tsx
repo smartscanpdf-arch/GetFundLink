@@ -9,11 +9,11 @@ export default async function InvestorDashboardPage() {
 
   const [{ data: profile }, { data: investorProfile }, { data: savedCount }, { data: introsSent }, { data: recentNotifs }] =
     await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
-      supabase.from("investor_profiles").select("*").eq("user_id", user.id).single(),
-      supabase.from("saved_startups").select("id", { count: "exact", head: true }).eq("investor_id", user.id),
-      supabase.from("intro_requests").select("id,status,created_at,founder:founder_id(full_name,founder_profile:founder_profiles(startup_name,sector,stage))").eq("investor_id", user.id).order("created_at", { ascending: false }).limit(5),
-      supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
+      (supabase.from("profiles") as any).select("*").eq("id", user.id).single(),
+      (supabase.from("investor_profiles") as any).select("*").eq("user_id", user.id).single(),
+      (supabase.from("saved_startups") as any).select("id", { count: "exact", head: true }).eq("investor_id", user.id),
+      (supabase.from("intro_requests") as any).select("id,status,created_at,founder:founder_id(full_name,founder_profile:founder_profiles(startup_name,sector,stage))").eq("investor_id", user.id).order("created_at", { ascending: false }).limit(5),
+      (supabase.from("notifications") as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
     ]);
 
   if (profile?.role !== "investor") redirect(`/dashboard/${profile?.role ?? "investor"}`);

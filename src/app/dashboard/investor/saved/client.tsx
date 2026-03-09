@@ -18,7 +18,7 @@ export function SavedClient({ saved: initialSaved, investorId }: { saved: any[];
   const [sending,   setSending]   = useState(false);
 
   const unsave = async (founderId: string) => {
-    await supabase.from("saved_startups").delete().eq("investor_id", investorId).eq("founder_id", founderId);
+    await (supabase.from("saved_startups") as any).delete().eq("investor_id", investorId).eq("founder_id", founderId);
     setItems(p => p.filter(s => s.founder_id !== founderId));
     toast.success("Removed from saved");
   };

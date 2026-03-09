@@ -21,7 +21,7 @@ export function PortfolioClient({ investments: init, investorId }: { investments
   const saveInvestment = async () => {
     if (!form.company_name) { toast.error("Company name required"); return; }
     setSaving(true);
-    const { data, error } = await supabase.from("portfolio_investments").insert({
+    const { data, error } = await (supabase.from("portfolio_investments") as any).insert({
       investor_id: investorId,
       company_name: form.company_name,
       sector: form.sector || null,

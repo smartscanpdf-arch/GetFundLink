@@ -51,8 +51,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
   try {
     const supabase = createServerClient();
-    const { error } = await supabase
-      .from("notifications")
+    const { error } = await (supabase.from("notifications") as any)
       .update({ is_read: true })
       .eq("id", notificationId);
 
@@ -71,8 +70,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
 export async function createNotification(userId: string, type: string, title: string, body?: string, actionUrl?: string): Promise<Notification | null> {
   try {
     const supabase = createServerClient();
-    const { data, error } = await supabase
-      .from("notifications")
+    const { data, error } = await (supabase.from("notifications") as any)
       .insert([{ user_id: userId, type, title, body, action_url: actionUrl }])
       .select()
       .single();

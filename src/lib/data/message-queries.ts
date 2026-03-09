@@ -54,8 +54,7 @@ export async function getMessages(threadId: string, page = 1): Promise<Message[]
 export async function createMessage(threadId: string, senderId: string, body: string): Promise<Message | null> {
   try {
     const supabase = createServerClient();
-    const { data, error } = await supabase
-      .from("messages")
+    const { data, error } = await (supabase.from("messages") as any)
       .insert([{ thread_id: threadId, sender_id: senderId, body }])
       .select("*, sender:sender_id(id, full_name, avatar_url)")
       .single();
@@ -75,8 +74,7 @@ export async function createMessage(threadId: string, senderId: string, body: st
 export async function markMessagesAsRead(threadId: string, userId: string): Promise<boolean> {
   try {
     const supabase = createServerClient();
-    const { error } = await supabase
-      .from("messages")
+    const { error } = await (supabase.from("messages") as any)
       .update({ is_read: true })
       .eq("thread_id", threadId)
       .not("sender_id", "eq", userId);
