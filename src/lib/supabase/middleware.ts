@@ -21,7 +21,7 @@ export async function updateSession(request: NextRequest) {
       {
         cookies: {
           getAll() { return request.cookies.getAll(); },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
             cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
             supabaseResponse = NextResponse.next({ request });
             cookiesToSet.forEach(({ name, value, options }) =>
@@ -54,8 +54,8 @@ export async function updateSession(request: NextRequest) {
 
     // Logged in + trying to hit auth pages → redirect to their dashboard
     if (user && isAuthRoute) {
-      const { data: profile } = await supabase
-        .from("profiles")
+      const { data: profile } = await (supabase
+        .from("profiles") as any)
         .select("role")
         .eq("id", user.id)
         .single();
