@@ -2,16 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  // Check if Supabase environment variables are set
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Check if Supabase environment variables are set BEFORE creating response
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("[Supabase] Missing environment variables. Skipping auth session update.");
-    return supabaseResponse;
+    // Return early if env vars are missing - don't create supabase client
+    return NextResponse.next({ request });
   }
+
+  let supabaseResponse = NextResponse.next({ request });
 
   let supabase;
   try {
@@ -32,7 +32,8 @@ export async function updateSession(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.warn("[Supabase] Failed to create client:", error instanceof Error ? error.message : "Unknown error");
+    // If we can't create the client, just return the response
+    // This prevents build-time failures when env vars are missing
     return supabaseResponse;
   }
 
